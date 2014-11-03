@@ -23,15 +23,23 @@
 		<script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
 		<script src="http://code.jquery.com/jquery-1.11.1.js"></script>
 		<script type="text/javascript">
-			var socket = io();
-			$('form').submit(function () {
-				socket.emit('chat messages', $('#m').val());
-				$('#m').val('');
-				return false;
-			});
-			socket.on('chat message', function(msg){
-			    $('#messages').append($('<li>').text(msg));
-			});
+			var socket = io(),
+				chat = {
+					$list: $('#messages'),
+					$textField: $('#m'),
+					appendMessage: function(msg){
+						chat.$list.append($('<li>').text(msg));
+					},
+					onSubmitHandler: function () {
+						socket.emit('chat messages', chat.$textField.val());
+						chat.$textField.val('');
+						return false;
+					}
+				};
+			
+			$('form').submit(chat.onSubmitHandler);
+			socket.on('chat message', chat.appendMessage);
+
 		</script>
 	</body>
 </html>
