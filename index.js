@@ -1,19 +1,23 @@
 var app = require('express')();
 var http = require('http').Server(app);
-var io = require('socket.io')(http);
+var chat = require('socket.io')(http);
 
 app.get('/', function(req, res){
 	res.sendFile(__dirname+'/index.html');
 });
-io.on('connection', function(socket){
+chat.on('connection', function(client){
+	
 	console.log('a user connected');
-	socket.broadcast.emit('hi');
-	socket.on('disconect', function(){
-		console.log('user disconected');
+	client.broadcast.emit('chat message', 'a user connected');
+	
+	client.on('disconnect', function(){
+		console.log('a user disconnected');
+		client.broadcast.emit('chat message', 'a user disconnected');
 	});
-	socket.on('chat messages', function(msg){
+	
+	client.on('chat messages', function(msg){
 		console.log('message: ' + msg);
-		io.emit('chat message', msg);
+		chat.emit('chat message', msg);
 	});
 });
 
