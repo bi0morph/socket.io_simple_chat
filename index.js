@@ -15,9 +15,9 @@ chat.on('connection', function(client){
 		client.broadcast.emit('chat message', 'a user disconnected');
 	});
 	
-	client.on('chat messages', function(msg){
-		console.log('message: ' + msg);
-		chat.emit('chat message', msg);
+	client.on('new message', function(data){
+		console.log(data.nickname + ' sayed: ' + data.message);
+		chat.emit('chat message', data.nickname + ' sayed: ' + data.message);
 	});
 });
 

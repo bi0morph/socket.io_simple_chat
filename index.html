@@ -27,19 +27,31 @@
 				chat = {
 					$list: $('#messages'),
 					$textField: $('#m'),
+					nickname: '',
 					appendMessage: function(msg){
 						chat.$list.append($('<li>').text(msg));
 					},
 					onSubmitHandler: function () {
-						socket.emit('chat messages', chat.$textField.val());
+						var data = {
+							message: chat.$textField.val(),
+							nickname: chat.nickname
+						};
+						socket.emit('new message', data);
 						chat.$textField.val('');
 						return false;
+					},
+					nicknameValidate: function(){
+						if (!this.nickname) {
+							this.nickname = prompt('Enter your nickname, please:');
+						};
+					},
+					init: function(){
+						$('form').submit(this.onSubmitHandler);
+						socket.on('chat message', this.appendMessage);
+						this.nicknameValidate();
 					}
 				};
-			
-			$('form').submit(chat.onSubmitHandler);
-			socket.on('chat message', chat.appendMessage);
-
+			chat.init();
 		</script>
 	</body>
 </html>
