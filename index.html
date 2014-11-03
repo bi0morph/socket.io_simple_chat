@@ -32,23 +32,15 @@
 						chat.$list.append($('<li>').text(msg));
 					},
 					onSubmitHandler: function () {
-						var data = {
-							message: chat.$textField.val(),
-							nickname: chat.nickname
-						};
-						socket.emit('new message', data);
+						socket.emit('new message', chat.$textField.val());
 						chat.$textField.val('');
 						return false;
 					},
-					nicknameValidate: function(){
-						if (!this.nickname) {
-							this.nickname = prompt('Enter your nickname, please:');
-						};
-					},
 					init: function(){
 						$('form').submit(this.onSubmitHandler);
-						socket.on('chat message', this.appendMessage);
-						this.nicknameValidate();
+						this.nickname = prompt('Enter your nickname, please:');
+						socket.emit('join', this.nickname);
+						socket.on('message', this.appendMessage);
 					}
 				};
 			chat.init();

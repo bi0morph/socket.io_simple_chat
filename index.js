@@ -1,23 +1,33 @@
 var app = require('express')();
 var http = require('http').Server(app);
 var chat = require('socket.io')(http);
+var users = [], chatlog = [];
 
 app.get('/', function(req, res){
 	res.sendFile(__dirname+'/index.html');
 });
+
 chat.on('connection', function(client){
 	
-	console.log('a user connected');
-	client.broadcast.emit('chat message', 'a user connected');
-	
-	client.on('disconnect', function(){
-		console.log('a user disconnected');
-		client.broadcast.emit('chat message', 'a user disconnected');
+
+	client.on('join', function(nickname) {
+		client.nickname = nickname;
+		client.broadcast.emit('message', nickname + ' connected');
+		console.log(nickname + ' connected');
+	});
+	client.on('disconnect', function() {
+		if (client.nickname) {
+			console.log(client.nickname + ' disconnected');
+			client.broadcast.emit(client.nickname + ' disconnected');
+		}else {
+			console.log('a user disconnected');
+			client.broadcast.emit('message', 'a user disconnected');
+		}
 	});
 	
-	client.on('new message', function(data){
-		console.log(data.nickname + ' sayed: ' + data.message);
-		chat.emit('chat message', data.nickname + ' sayed: ' + data.message);
+	client.on('new message', function(message) {
+		console.log(client.nickname + ' sayed: ' + message);
+		chat.emit('message', client.nickname + ' sayed: ' + message);
 	});
 });
 
