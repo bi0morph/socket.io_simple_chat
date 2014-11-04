@@ -2,6 +2,12 @@ var app = require('express')();
 var http = require('http').Server(app);
 var chat = require('socket.io')(http);
 var users = [], chatlog = [];
+var storeMessages = function(message){
+	chatlog.push(message);
+	if (chatlog.length > 10) {
+		messages.shift();
+	}
+};
 
 app.get('/', function(req, res){
 	res.sendFile(__dirname+'/index.html');
@@ -9,10 +15,17 @@ app.get('/', function(req, res){
 
 chat.on('connection', function(client){
 	
-
+	
+	
 	client.on('join', function(nickname) {
+		chatlog.forEach(function(message) {
+			client.emit('message', message);
+		});
+		users.push(nickname);
 		client.nickname = nickname;
-		client.broadcast.emit('message', nickname + ' connected');
+		//client.broadcast.emit('message', nickname + ' connected');
+		chat.emit('message', nickname + ' connected');
+		storeMessages(nickname + ' connected');
 		console.log(nickname + ' connected');
 	});
 	client.on('disconnect', function() {
@@ -26,8 +39,10 @@ chat.on('connection', function(client){
 	});
 	
 	client.on('new message', function(message) {
-		console.log(client.nickname + ' sayed: ' + message);
-		chat.emit('message', client.nickname + ' sayed: ' + message);
+		var fullMessage = client.nickname + ' sayed: ' + message;
+		console.log(fullMessage);
+		chat.emit('message', fullMessage);
+		storeMessages(fullMessage);
 	});
 });
 
