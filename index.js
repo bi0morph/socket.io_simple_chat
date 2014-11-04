@@ -1,13 +1,15 @@
 var app = require('express')();
 var http = require('http').Server(app);
 var chat = require('socket.io')(http);
-var users = [], chatlog = [];
+var users = [];
 var storeMessages = function(message){
-	chatlog.push(message);
-	if (chatlog.length > 10) {
-		messages.shift();
-	}
+	clientRedis.lpush("messages", message, function(err, reply) {
+		clientRedis.ltrim("messages", 0, 9);
+	});
 };
+var redis = require('redis');
+var clientRedis = redis.createClient();
+
 
 app.get('/', function(req, res){
 	res.sendFile(__dirname+'/index.html');
@@ -15,15 +17,16 @@ app.get('/', function(req, res){
 
 chat.on('connection', function(client){
 	
-	
-	
 	client.on('join', function(nickname) {
-		chatlog.forEach(function(message) {
-			client.emit('message', message);
+		clientRedis.lrange("messages", 0, -1, function(err, messages) {
+			messages = messages.reverse();
+			messages.forEach(function(message) {
+				client.emit('message', message);
+			});
 		});
+		
 		users.push(nickname);
 		client.nickname = nickname;
-		//client.broadcast.emit('message', nickname + ' connected');
 		chat.emit('message', nickname + ' connected');
 		storeMessages(nickname + ' connected');
 		console.log(nickname + ' connected');
@@ -31,9 +34,11 @@ chat.on('connection', function(client){
 	client.on('disconnect', function() {
 		if (client.nickname) {
 			console.log(client.nickname + ' disconnected');
+			storeMessages(client.nickname + ' disconnected');
 			client.broadcast.emit(client.nickname + ' disconnected');
 		}else {
 			console.log('a user disconnected');
+			storeMessages('a user disconnected');
 			client.broadcast.emit('message', 'a user disconnected');
 		}
 	});
