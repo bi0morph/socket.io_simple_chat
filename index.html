@@ -8,8 +8,9 @@
 
 		body { font: 13px Helvetica, Arial; }
 		form { background: #111; padding: 3px; position: fixed; bottom: 0; width: 100%;}
-		form input {border: 0; padding: 10px; width: 90%; margin-right: .5%; }
-		form button { width: 9%; background: rgb(131, 225, 255); border: none; padding: 10px; }
+		form input {border: 0; padding: 10px; width: 80%; margin-right: .5%; }
+		.btn { width: 9%; background: rgb(131, 225, 255); border: none; padding: 10px; cursor: pointer;}
+		.btn.btn-clear { background: rgb(255, 225, 131); }
 		#messages { list-style-type: none; margin: 0; padding: 0;}
 		#messages li {padding: 5px 10px; }
 		#messages li:nth-child(odd) {background: #e1e1e1; }
@@ -18,7 +19,9 @@
 	<body>
 		<ul id="messages"></ul>
 		<form action="">
-			<input id="m" autocomplite="off" /> <button>Send</button>
+			<input id="m" autocomplite="off" />
+			<button class="btn btn-clear" type="button" id="clear-btn">Clear</button>
+			<button class="btn">Send</button>
 		</form>
 		<script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
 		<script src="http://code.jquery.com/jquery-1.11.1.js"></script>
@@ -32,12 +35,18 @@
 						chat.$list.append($('<li>').text(msg));
 					},
 					onSubmitHandler: function () {
-						socket.emit('new message', chat.$textField.val());
+						var message = chat.$textField.val();
+						socket.emit('new message', message);
+						chat.appendMessage('You sayed: ' + message)
 						chat.$textField.val('');
 						return false;
 					},
+					clearList: function(){
+						chat.$list.empty();
+					},
 					init: function(){
 						$('form').submit(this.onSubmitHandler);
+						$('#clear-btn').click(this.clearList);
 						this.nickname = prompt('Enter your nickname, please:');
 						socket.emit('join', this.nickname);
 						socket.on('message', this.appendMessage);

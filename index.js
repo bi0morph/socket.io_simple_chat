@@ -18,6 +18,11 @@ app.get('/', function(req, res){
 chat.on('connection', function(client){
 	
 	client.on('join', function(nickname) {
+		users.push(nickname);
+		client.nickname = nickname;
+		storeMessages(nickname + ' connected');
+		console.log(nickname + ' connected');
+
 		clientRedis.lrange("messages", 0, -1, function(err, messages) {
 			messages = messages.reverse();
 			messages.forEach(function(message) {
@@ -25,11 +30,7 @@ chat.on('connection', function(client){
 			});
 		});
 		
-		users.push(nickname);
-		client.nickname = nickname;
-		chat.emit('message', nickname + ' connected');
-		storeMessages(nickname + ' connected');
-		console.log(nickname + ' connected');
+		
 	});
 	client.on('disconnect', function() {
 		if (client.nickname) {
@@ -46,7 +47,7 @@ chat.on('connection', function(client){
 	client.on('new message', function(message) {
 		var fullMessage = client.nickname + ' sayed: ' + message;
 		console.log(fullMessage);
-		chat.emit('message', fullMessage);
+		client.broadcast.emit('message', fullMessage);
 		storeMessages(fullMessage);
 	});
 });
