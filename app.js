@@ -13,9 +13,7 @@ app.get('/', function(req, res){
 	res.sendFile(__dirname+'/index.html');
 });
 
-chat.on('connection', function(client){
-	
-	
+chat.on('connection', function(client) {
 	
 	client.on('join', function(nickname) {
 		chatlog.forEach(function(message) {
@@ -23,6 +21,7 @@ chat.on('connection', function(client){
 		});
 		users.push(nickname);
 		client.nickname = nickname;
+		client.typingTimeout = false;
 		//client.broadcast.emit('message', nickname + ' connected');
 		chat.emit('message', nickname + ' connected');
 		storeMessages(nickname + ' connected');
@@ -44,23 +43,30 @@ chat.on('connection', function(client){
 		chat.emit('message', fullMessage);
 		storeMessages(fullMessage);
 	});
+
+	client.on('start typing', function() {
+		if (!client.isTyping) {
+			client.isTyping = true;
+			client.broadcast.emit('startTyping', client.nickname);
+		};
+		if (client.typingTimeout != false) clearTimeout(client.typingTimeout);
+	    client.typingTimeout = setTimeout(function() {
+	    	client.isTyping = false;
+			client.typingTimeout = false;
+			console.log(client.nickname + ' stop typing');
+			client.broadcast.emit('stopTyping', client.nickname);
+	    }, 1500);
+		console.log(client.nickname + ' start typing');
+	});
+
+	client.on('stop typing', function(){
+		client.isTyping = false;
+		client.typingTimeout = false;
+		console.log(client.nickname + ' stop typing');
+		client.broadcast.emit('stopTyping', client.nickname);
+	});
 });
 
 http.listen(3000, function(){
 	console.log('listening on *:3000');
 });
-
-/*
-TODO: Homework
-
-
-Here are some ideas to improve the application:
-
-Broadcast a message to connected users when someone connects or disconnects
-Add support for nicknames
-Don’t send the same message to the user that sent it himself. Instead, append the message directly as soon as he presses enter.
-Add “{user} is typing” functionality
-Show who’s online
-Add private messaging
-Share your improvements!
-*/
